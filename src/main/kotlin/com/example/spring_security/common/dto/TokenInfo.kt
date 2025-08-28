@@ -4,5 +4,5 @@ package com.example.spring_security.common.dto
 class TokenInfo (
     val grantType : String,
     val accessToken : String,
-    val refreshToken : String
+//    val refreshToken : String
 )
