@@ -19,7 +19,6 @@ import com.example.spring_security.member.repository.PasswordResetCodeRepository
 import com.example.spring_security.member.repository.RefreshTokenRepository
 import jakarta.transaction.Transactional
 import org.springframework.data.repository.findByIdOrNull
-import org.springframework.mail.SimpleMailMessage
 import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.mail.javamail.MimeMessageHelper
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
@@ -38,7 +37,7 @@ class MemberService(
     //인증관리자
     private val authenticationManagerBuilder: AuthenticationManagerBuilder,
     private val refreshTokenRepository: RefreshTokenRepository,
-//    private val javaMailSender : JavaMailSender,
+    private val javaMailSender : JavaMailSender,
     private val passwordResetCodeRepository: PasswordResetCodeRepository,
     private val templateEngine : SpringTemplateEngine
 ) {
@@ -80,27 +79,27 @@ class MemberService(
         }
 
         val accessToken = jwtTokenProvider.createAccessToken(authentication)
-//        val refreshToken = jwtTokenProvider.createRefreshToken()
+        val refreshToken = jwtTokenProvider.createRefreshToken()
 
         val data = RefreshToken(
             memberId = memberId,
-//            refreshToken = refreshToken
+            refreshToken = refreshToken
         )
 
         refreshTokenRepository.save(data)
 
         // 인증된 객체를 기반으로 JWT 토큰 생성
-        return TokenInfo(grantType = "Bearer", accessToken = accessToken,)
+        return TokenInfo(grantType = "Bearer", accessToken = accessToken, refreshToken = refreshToken)
     }
 
     //로그아웃
     fun logout(id: Long) : String {
         val member = memberRepository.findByIdOrNull(id)
             ?: throw RuntimeException("존재하지 않는 사용자입니다!")
-//        val refreshToken = refreshTokenRepository.findByMemberId(id)
-//            ?: throw RuntimeException("로그인 하지 않는 사용자입니다!")
+        val refreshToken = refreshTokenRepository.findByMemberId(id)
+            ?: throw RuntimeException("로그인 하지 않는 사용자입니다!")
 
-//        refreshTokenRepository.delete(refreshToken)
+        refreshTokenRepository.delete(refreshToken)
         return "로그아웃 되었습니다."
     }
 
@@ -111,57 +110,57 @@ class MemberService(
         return member.toResponse()
     }
 
-//    //비밀번호 재설정 코드
-//    fun sendPasswordResetCode(email: String): String {
-//        val member = memberRepository.findByEmail(email) ?: throw InvalidEmailException(fieldName = "email", message = "해당 사용자를 찾을 수 없습니다.")
-//
-//        val code = (100000 .. 999999).random().toString()
-//        val expirationTime = LocalDateTime.now().plusMinutes(15)
-//
-//        val passwordResetCode = ResetCode(
-//            code = code,
-//            email = email,
-//            expiryDate = expirationTime
-//        )
-//        passwordResetCodeRepository.save(passwordResetCode)
-//
-//        val context = Context().apply {
-//            setVariable("email", email)
-//            setVariable("code", code)
-//        }
-//        val html = templateEngine.process("reset-password-code.html", context)
-//
-//        val mimeMessage = javaMailSender.createMimeMessage()
-//        val helper = MimeMessageHelper(mimeMessage, "utf-8")
-//        helper.setTo(email)
-//        helper.setSubject("비밀번호 재설정 코드 안내")
-//        helper.setText(html, true)
-//
-//        javaMailSender.send(mimeMessage)
-//
-//        return "메일이 발송되었습니다."
-//    }
-//
-//    fun validationResetCode(code: String, email: String): Boolean {
-//        val passwordResetCode = passwordResetCodeRepository.findByCodeAndEmail(code, email)
-//        return passwordResetCode != null && passwordResetCode.expiryDate.isAfter(LocalDateTime.now())
-//    }
-//
-//    fun passwordSave(member: Member){
-//        memberRepository.save(member)
-//    }
-//
-//    fun handlePasswordReset(passwordResetRequestDto: PasswordResetRequestDto) : String {
-//        val member = memberRepository.findByEmail(passwordResetRequestDto.email)
-//            ?: throw InvalidEmailException(fieldName = "email", message = "사용자를 찾을 수 없습니다.")
-//
-//        if(!validationResetCode(passwordResetRequestDto.code, passwordResetRequestDto.email)){
-//            throw InvalidEmailException(fieldName = "code", message = "인증코드가 정확하지 않습니다!")
-//        }
-//
-//        member.password = passwordResetRequestDto.newPassword
-//        passwordSave(member)
-//
-//        return "비밀번호가 변경되었습니다."
-//    }
+    //비밀번호 재설정 코드
+    fun sendPasswordResetCode(email: String): String {
+        val member = memberRepository.findByEmail(email) ?: throw InvalidEmailException(fieldName = "email", message = "해당 사용자를 찾을 수 없습니다.")
+
+        val code = (100000 .. 999999).random().toString()
+        val expirationTime = LocalDateTime.now().plusMinutes(15)
+
+        val passwordResetCode = ResetCode(
+            code = code,
+            email = email,
+            expiryDate = expirationTime
+        )
+        passwordResetCodeRepository.save(passwordResetCode)
+
+        val context = Context().apply {
+            setVariable("email", email)
+            setVariable("code", code)
+        }
+        val html = templateEngine.process("reset-password-code.html", context)
+
+        val mimeMessage = javaMailSender.createMimeMessage()
+        val helper = MimeMessageHelper(mimeMessage, "utf-8")
+        helper.setTo(email)
+        helper.setSubject("비밀번호 재설정 코드 안내")
+        helper.setText(html, true)
+
+        javaMailSender.send(mimeMessage)
+
+        return "메일이 발송되었습니다."
+    }
+
+    fun validationResetCode(code: String, email: String): Boolean {
+        val passwordResetCode = passwordResetCodeRepository.findByCodeAndEmail(code, email)
+        return passwordResetCode != null && passwordResetCode.expiryDate.isAfter(LocalDateTime.now())
+    }
+
+    fun passwordSave(member: Member){
+        memberRepository.save(member)
+    }
+
+    fun handlePasswordReset(passwordResetRequestDto: PasswordResetRequestDto) : String {
+        val member = memberRepository.findByEmail(passwordResetRequestDto.email)
+            ?: throw InvalidEmailException(fieldName = "email", message = "사용자를 찾을 수 없습니다.")
+
+        if(!validationResetCode(passwordResetRequestDto.code, passwordResetRequestDto.email)){
+            throw InvalidEmailException(fieldName = "code", message = "인증코드가 정확하지 않습니다!")
+        }
+
+        member.password = passwordResetRequestDto.newPassword
+        passwordSave(member)
+
+        return "비밀번호가 변경되었습니다."
+    }
 }

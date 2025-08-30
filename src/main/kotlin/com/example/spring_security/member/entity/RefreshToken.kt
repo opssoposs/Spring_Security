@@ -11,6 +11,6 @@ class RefreshToken (
     @Indexed
     val memberId: Long,
 
-//    @Indexed
-//    val refreshToken: String,
+    @Indexed
+    val refreshToken: String,
 )

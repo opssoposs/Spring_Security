@@ -7,11 +7,11 @@ spring:
   config:
     import: optional:file:.env[.properties]
 
-#
-#  data:
-#    redis:
-#      host: localhost
-#      port: 6379
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
 
 #create user '사용자'@'%' identified by '비밀번호';
 #grant all privileges on DBNAME.* to userID@'%';
@@ -21,18 +21,18 @@ spring:
     username: ${DB_USER}
     password: ${DB_PASSWORD}
 
-#  mail:
-#    protocol: smtp
-#    port: 587
-#    username: ${GOOGLE_ID}
-#    password: ${APP_PASSWORD}
-#    host: smtp.gmail.com
-#    properties:
-#      mail:
-#        smtp:
-#          auth: true
-#          starttls:
-#            enable: true
+  mail:
+    protocol: smtp
+    port: 587
+    username: ${GOOGLE_ID}
+    password: ${APP_PASSWORD}
+    host: smtp.gmail.com
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
   jpa:
     database: mysql
@@ -48,15 +48,15 @@ spring:
 
 jwt:
   secret : ${JWT_SECRET}
-#
-#cloud:
-#  aws:
-#    s3:
-#      bucket: ${S3_BUCKET}
-#    credentials:
-#      access-key: ${IAM_ACCESS_KEY}
-#      secret-key: ${IAM_SECRET_KEY}
-#    stack:
-#      auto: false
-#    region:
-#      static: ${AWS_REGION}
+
+cloud:
+  aws:
+    s3:
+      bucket: ${S3_BUCKET}
+    credentials:
+      access-key: ${IAM_ACCESS_KEY}
+      secret-key: ${IAM_SECRET_KEY}
+    stack:
+      auto: false
+    region:
+      static: ${AWS_REGION}
